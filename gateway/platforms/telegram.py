@@ -4820,6 +4820,24 @@ class TelegramAdapter(BasePlatformAdapter):
         #    before the normal MarkdownV2 conversions run.
         text = _wrap_markdown_tables(text)
 
+        # 0.5) Convert <think>...</think> into Telegram expandable blockquote
+        # Syntax: prefix lines with **> and append || to the very last line
+        def _convert_think(m):
+            think_content = m.group(1).strip()
+            if not think_content:
+                return ""
+            lines = think_content.split('\n')
+            # Prefix each line with **>, use a space if line is empty to match (.+)
+            bq_lines = [f"**> {line}" if line else "**>  " for line in lines]
+            bq_lines[-1] += "||"
+            return "\n".join(bq_lines) + "\n"
+
+        text = re.sub(
+            r'<think>\s*([\s\S]*?)\s*</think>',
+            _convert_think,
+            text,
+        )
+
         # 1) Protect fenced code blocks (``` ... ```)
         #    Per MarkdownV2 spec, \ and ` inside pre/code must be escaped.
         def _protect_fenced(m):
