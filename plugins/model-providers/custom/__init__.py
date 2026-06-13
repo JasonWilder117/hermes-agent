@@ -68,6 +68,7 @@ custom = CustomProfile(
     # only a floor used when the user hasn't set model.max_tokens — they can
     # override per-model — so we set it generously rather than lowballing it.
     default_max_tokens=65536,
+    omit_stream_options=True,
 )
 
 register_provider(custom)

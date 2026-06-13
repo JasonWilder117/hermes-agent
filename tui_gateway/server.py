@@ -246,16 +246,20 @@ class _SlashWorker:
             argv += ["--model", model]
 
         self._closed = False
-        self.proc = subprocess.Popen(
-            argv,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
-            cwd=os.getcwd(),
-            env=os.environ.copy(),
-        )
+        
+        popen_kwargs = {
+            "stdin": subprocess.PIPE,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE,
+            "text": True,
+            "bufsize": 1,
+            "cwd": os.getcwd(),
+            "env": os.environ.copy(),
+        }
+        if os.name == "nt":
+            popen_kwargs["creationflags"] = 0x08000000  # CREATE_NO_WINDOW
+            
+        self.proc = subprocess.Popen(argv, **popen_kwargs)
         threading.Thread(target=self._drain_stdout, daemon=True).start()
         threading.Thread(target=self._drain_stderr, daemon=True).start()
 

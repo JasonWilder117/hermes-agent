@@ -2080,6 +2080,7 @@ def _spawn_hermes_action(subcommand: List[str], name: str) -> subprocess.Popen:
         popen_kwargs["creationflags"] = (
             subprocess.CREATE_NEW_PROCESS_GROUP  # type: ignore[attr-defined]
             | getattr(subprocess, "DETACHED_PROCESS", 0)
+            | 0x08000000  # CREATE_NO_WINDOW
         )
     else:
         popen_kwargs["start_new_session"] = True

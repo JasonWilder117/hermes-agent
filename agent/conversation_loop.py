@@ -668,8 +668,18 @@ def run_conversation(
         # bytes are byte-stable across turns and upstream prompt caches
         # stay warm.
         effective_system = active_system_prompt or ""
-        if agent.ephemeral_system_prompt:
-            effective_system = (effective_system + "\n\n" + agent.ephemeral_system_prompt).strip()
+        
+        import datetime
+        _now = datetime.datetime.now()
+        _tzname = _now.astimezone().tzname()
+        _local_time_context = f"Current Local Time: {_now.strftime('%Y-%m-%d %H:%M:%S')} ({_tzname})"
+        
+        _ephemeral = agent.ephemeral_system_prompt or ""
+        _ephemeral = (_ephemeral + "\n\n" + _local_time_context).strip()
+        
+        if _ephemeral:
+            effective_system = (effective_system + "\n\n" + _ephemeral).strip()
+            
         if effective_system:
             api_messages = [{"role": "system", "content": effective_system}] + api_messages
 

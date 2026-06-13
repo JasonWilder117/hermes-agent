@@ -1340,8 +1340,18 @@ def handle_max_iterations(agent, messages: list, api_call_count: int) -> str:
             api_messages.append(api_msg)
 
         effective_system = agent._cached_system_prompt or ""
-        if agent.ephemeral_system_prompt:
-            effective_system = (effective_system + "\n\n" + agent.ephemeral_system_prompt).strip()
+        
+        import datetime
+        _now = datetime.datetime.now()
+        _tzname = _now.astimezone().tzname()
+        _local_time_context = f"Current Local Time: {_now.strftime('%Y-%m-%d %H:%M:%S')} ({_tzname})"
+        
+        _ephemeral = agent.ephemeral_system_prompt or ""
+        _ephemeral = (_ephemeral + "\n\n" + _local_time_context).strip()
+        
+        if _ephemeral:
+            effective_system = (effective_system + "\n\n" + _ephemeral).strip()
+            
         if effective_system:
             api_messages = [{"role": "system", "content": effective_system}] + api_messages
         if agent.prefill_messages:
@@ -1802,10 +1812,18 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         # Cap connect/pool at 60s even when provider timeout is higher.
         # connect/pool cover TCP handshake, not model inference.
         _conn_cap = min(_base_timeout, 60.0) if _provider_timeout_cfg is not None else 30.0
+        _omit_stream_options = False
+        try:
+            from providers import get_provider_profile
+            _p = get_provider_profile(agent.provider)
+            if _p and getattr(_p, "omit_stream_options", False):
+                _omit_stream_options = True
+        except Exception:
+            pass
+
         stream_kwargs = {
             **api_kwargs,
             "stream": True,
-            "stream_options": {"include_usage": True},
             "timeout": _httpx.Timeout(
                 connect=_conn_cap,
                 read=_stream_read_timeout,
@@ -1813,6 +1831,8 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                 pool=_conn_cap,
             ),
         }
+        if not _omit_stream_options:
+            stream_kwargs["stream_options"] = {"include_usage": True}
         request_client = _set_request_client(
             agent._create_request_openai_client(
                 reason="chat_completion_stream_request",

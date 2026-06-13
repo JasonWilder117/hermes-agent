@@ -92,6 +92,7 @@ class ProviderProfile:
         ""  # cheap model for auxiliary tasks (compression, vision, etc.)
     )
     # empty = use main model
+    omit_stream_options: bool = False
 
     # ── Hooks (override in subclass for complex providers) ───
 
