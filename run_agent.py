@@ -523,7 +523,7 @@ class AIAgent:
                 cwd=_launch_cwd_for_session(source),
             )
             self._session_db_created = True
-        except Exception as e:
+        except json.JSONDecodeError as e:
             # Transient failure (e.g. SQLite lock). Keep _session_db alive —
             # _session_db_created stays False so next run_conversation() retries.
             logger.warning(
@@ -4287,7 +4287,7 @@ class AIAgent:
             )
             result = json.loads(result_json) if isinstance(result_json, str) else {}
             description = (result.get("analysis") or "").strip()
-        except Exception as e:
+        except json.JSONDecodeError as e:
             description = f"Image analysis failed: {e}"
         finally:
             if cleanup_path and cleanup_path.exists():

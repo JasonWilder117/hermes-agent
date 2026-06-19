@@ -58,6 +58,49 @@ class CronPromptInjectionBlocked(Exception):
     """
 
 
+def _validate_script_path(raw_path: str | Path, scripts_dir: Path) -> Path:
+    """
+    Validate and resolve script path with symlink protection.
+
+    Resolves the path, ensures it's within scripts_dir, and logs any blocking.
+    Uses Path.resolve() which follows symlinks, eliminating symlink-based
+    traversal attacks.
+
+    Args:
+        raw_path: User-provided script path (may be relative or absolute, may contain ~)
+        scripts_dir: The base directory that scripts must reside within
+
+    Returns:
+        Path: The validated, resolved absolute path
+
+    Raises:
+        ValueError: If the path resolves outside scripts_dir
+    """
+    # Convert to Path object and expand ~
+    path = Path(raw_path).expanduser()
+
+    # Handle absolute vs relative paths
+    if path.is_absolute():
+        resolved_path = path.resolve()
+    else:
+        resolved_path = (scripts_dir / path).resolve()
+
+    # Ensure the resolved path is within the scripts directory
+    try:
+        resolved_path.relative_to(scripts_dir.resolve())
+    except ValueError:
+        # Log the blocked attempt for security monitoring
+        logger.warning(
+            f"Path traversal attempt blocked: '{raw_path}' resolves to '{resolved_path}' "
+            f"which is outside the allowed scripts directory '{scripts_dir.resolve()}'"
+        )
+        raise ValueError(
+            f"Blocked: script path resolves outside the scripts directory "
+            f"({scripts_dir.resolve()}): {raw_path!r}"
+        )
+
+    return resolved_path
+
 def _resolve_cron_disabled_toolsets(cfg: dict) -> list[str]:
     """Toolsets a cron-spawned agent must never receive.
 
@@ -918,24 +961,13 @@ def _run_job_script(script_path: str) -> tuple[bool, str]:
     """
     scripts_dir = _get_hermes_home() / "scripts"
     scripts_dir.mkdir(parents=True, exist_ok=True)
-    scripts_dir_resolved = scripts_dir.resolve()
-
-    raw = Path(script_path).expanduser()
-    if raw.is_absolute():
-        path = raw.resolve()
-    else:
-        path = (scripts_dir / raw).resolve()
-
-    # Guard against path traversal, absolute path injection, and symlink
-    # escape — scripts MUST reside within HERMES_HOME/scripts/.
+    # Validate and resolve the script path with symlink protection
     try:
-        path.relative_to(scripts_dir_resolved)
-    except ValueError:
-        return False, (
-            f"Blocked: script path resolves outside the scripts directory "
-            f"({scripts_dir_resolved}): {script_path!r}"
-        )
-
+        path = _validate_script_path(script_path, scripts_dir)
+    except ValueError as e:
+        # _validate_script_path already logs the warning
+        return False, str(e)
+    
     if not path.exists():
         return False, f"Script not found: {path}"
     if not path.is_file():

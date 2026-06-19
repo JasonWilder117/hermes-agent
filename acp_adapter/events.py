@@ -30,7 +30,7 @@ def _json_loads_maybe_prefix(value: str) -> Any:
     text = value.strip()
     try:
         return json.loads(text)
-    except Exception:
+    except json.JSONDecodeError:
         decoder = json.JSONDecoder()
         data, _ = decoder.raw_decode(text)
         return data

@@ -135,7 +135,7 @@ def _run_async(coro):
                         worker_loop.run_until_complete(
                             asyncio.gather(*pending, return_exceptions=True)
                         )
-                except Exception:
+                except json.JSONDecodeError:
                     pass
                 worker_loop.close()
 
@@ -763,7 +763,7 @@ def _coerce_json(value: str, expected_python_type: type):
     """
     try:
         parsed = json.loads(value)
-    except (ValueError, TypeError) as exc:
+    except (json.JSONDecodeError, TypeError) as exc:
         logger.warning(
             "coerce_tool_args: failed to parse string as JSON for expected type %s: %s",
             expected_python_type.__name__,
@@ -817,7 +817,7 @@ def _tool_result_observer_fields(result: Any) -> tuple[str, Optional[str], Optio
         parsed_result = json.loads(result) if isinstance(result, str) else result
         if isinstance(parsed_result, dict) and parsed_result.get("error"):
             return "error", "tool_error", str(parsed_result.get("error"))
-    except Exception:
+    except json.JSONDecodeError:
         pass
     return "ok", None, None
 

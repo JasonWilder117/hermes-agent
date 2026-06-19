@@ -189,7 +189,7 @@ def _json_loads_maybe(value: Optional[str]) -> Any:
         return value
     try:
         return json.loads(value)
-    except Exception:
+    except json.JSONDecodeError:
         pass
 
     # Some Hermes tools append a human hint after a JSON payload, e.g.

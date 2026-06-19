@@ -79,7 +79,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from hermes_cli import __version__ as HERMES_VERSION
-except Exception:
+except json.JSONDecodeError:
     HERMES_VERSION = "0.0.0"
 
 # Thread pool for running AIAgent (synchronous) in parallel.
@@ -999,7 +999,7 @@ class HermesACPAgent(acp.Agent):
         if isinstance(raw_args, str):
             try:
                 parsed = json.loads(raw_args)
-            except Exception:
+            except json.JSONDecodeError:
                 parsed = {"raw": raw_args}
             raw_args = parsed
         if not isinstance(raw_args, dict):
