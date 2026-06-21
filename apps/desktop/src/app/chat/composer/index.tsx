@@ -12,6 +12,7 @@ import {
   useRef,
   useState
 } from 'react'
+import EmojiPicker, { Theme as EmojiTheme } from 'emoji-picker-react'
 
 import { hermesDirectiveFormatter, type SlashChipKind } from '@/components/assistant-ui/directive-text'
 import { composerFill, composerSurfaceGlass } from '@/components/chat/composer-dock'
@@ -215,6 +216,7 @@ export function ChatBar({
   const [voiceConversationActive, setVoiceConversationActive] = useState(false)
   const [tight, setTight] = useState(false)
   const [dragActive, setDragActive] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [queueEdit, setQueueEdit] = useState<QueueEditState | null>(null)
   const [focusRequestId, setFocusRequestId] = useState(0)
   const queueEditRef = useRef(queueEdit)
@@ -1656,10 +1658,11 @@ export function ChatBar({
         onToggleMute: conversation.toggleMute,
         status: conversation.status
       }}
-      disabled={disabled}
+      disabled={inputDisabled}
       hasComposerPayload={hasComposerPayload}
       onDictate={dictate}
       onSteer={steerDraft}
+      onToggleEmojiPicker={() => setShowEmojiPicker(prev => !prev)}
       state={state}
       voiceStatus={voiceStatus}
     />
@@ -1774,6 +1777,22 @@ export function ChatBar({
               onHover={setTriggerActive}
               onPick={replaceTriggerWithChip}
             />
+          )}
+          {showEmojiPicker && (
+            <div className="absolute bottom-full right-0 mb-4 shadow-xl z-50">
+              <EmojiPicker
+                theme={EmojiTheme.DARK}
+                onEmojiClick={(emojiData) => {
+                  const editor = editorRef.current
+                  if (editor) {
+                    editor.focus()
+                    document.execCommand('insertText', false, emojiData.emoji)
+                  }
+                  setShowEmojiPicker(false)
+                }}
+                autoFocusSearch={false}
+              />
+            </div>
           )}
           {/* Session-scoped status stack (todos, subagents, background tasks,
               queue). Out of flow so it never inflates the composer's measured

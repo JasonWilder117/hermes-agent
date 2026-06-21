@@ -26,7 +26,8 @@ import { Button } from "@nous-research/ui/ui/components/button";
 import { Typography } from "@nous-research/ui/ui/components/typography/index";
 import { HERMES_BASE_PATH, buildWsAuthParam } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { Copy, PanelRight, X } from "lucide-react";
+import { Copy, PanelRight, X, Smile } from "lucide-react";
+import EmojiPicker, { Theme as EmojiTheme } from "emoji-picker-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
@@ -139,6 +140,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
   );
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   // Raw state for the mobile side-sheet + a derived value that force-
   // closes whenever the chat tab isn't active.  The *derived* value is
   // what side-effects (body-scroll lock, keydown listener, portal render)
@@ -895,30 +897,66 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
             className="hermes-chat-xterm-host min-h-0 min-w-0 flex-1"
           />
 
-          <Button
-            ghost
-            onClick={handleCopyLast}
-            title="Copy last assistant response as raw markdown"
-            aria-label="Copy last assistant response"
-            className={cn(
-              "absolute z-10",
-              "normal-case tracking-normal font-normal",
-              "rounded border border-current/30",
-              "bg-black/20 backdrop-blur-sm",
-              "opacity-70 hover:opacity-100 hover:border-current/60",
-              "transition-opacity duration-150",
-              "bottom-2 right-2 px-2 py-1 text-xs sm:bottom-3 sm:right-3 sm:px-2.5 sm:py-1.5",
-              "lg:bottom-4 lg:right-4",
+          <div className="absolute z-10 bottom-2 right-2 flex flex-col items-end gap-2 sm:bottom-3 sm:right-3 lg:bottom-4 lg:right-4">
+            {showEmojiPicker && (
+              <div className="mb-2 shadow-xl">
+                <EmojiPicker
+                  theme={EmojiTheme.DARK}
+                  onEmojiClick={(emojiData) => {
+                    const ws = wsRef.current;
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                      termRef.current?.paste(emojiData.emoji);
+                    }
+                    setShowEmojiPicker(false);
+                    termRef.current?.focus();
+                  }}
+                  autoFocusSearch={false}
+                />
+              </div>
             )}
-            style={{ color: TERMINAL_THEME_STATIC.foreground }}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <Copy className="h-3 w-3 shrink-0" />
-              <span className="hidden min-[400px]:inline tracking-wide">
-                {copyState === "copied" ? "copied" : "copy last response"}
-              </span>
-            </span>
-          </Button>
+            
+            <div className="flex gap-2">
+              <Button
+                ghost
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                title="Pick Emoji"
+                aria-label="Pick Emoji"
+                className={cn(
+                  "rounded border border-current/30",
+                  "bg-black/20 backdrop-blur-sm",
+                  "opacity-70 hover:opacity-100 hover:border-current/60",
+                  "transition-opacity duration-150",
+                  "px-2 py-1 text-xs sm:px-2.5 sm:py-1.5",
+                )}
+                style={{ color: TERMINAL_THEME_STATIC.foreground }}
+              >
+                <Smile className="h-4 w-4 shrink-0" />
+              </Button>
+
+              <Button
+                ghost
+                onClick={handleCopyLast}
+                title="Copy last assistant response as raw markdown"
+                aria-label="Copy last assistant response"
+                className={cn(
+                  "normal-case tracking-normal font-normal",
+                  "rounded border border-current/30",
+                  "bg-black/20 backdrop-blur-sm",
+                  "opacity-70 hover:opacity-100 hover:border-current/60",
+                  "transition-opacity duration-150",
+                  "px-2 py-1 text-xs sm:px-2.5 sm:py-1.5",
+                )}
+                style={{ color: TERMINAL_THEME_STATIC.foreground }}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <Copy className="h-3 w-3 shrink-0" />
+                  <span className="hidden min-[400px]:inline tracking-wide">
+                    {copyState === "copied" ? "copied" : "copy last response"}
+                  </span>
+                </span>
+              </Button>
+            </div>
+          </div>
         </div>
 
         {!narrow && (

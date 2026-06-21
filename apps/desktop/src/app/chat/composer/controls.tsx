@@ -7,6 +7,7 @@ import { triggerHaptic } from '@/lib/haptics'
 import { AudioLines, Layers3, Loader2, Square, SteeringWheel } from '@/lib/icons'
 import { formatCombo } from '@/lib/keybinds/combo'
 import { cn } from '@/lib/utils'
+import { Smile } from 'lucide-react'
 
 import type { ConversationStatus } from './hooks/use-voice-conversation'
 import type { ChatBarState, VoiceStatus } from './types'
@@ -48,7 +49,8 @@ export function ComposerControls({
   state,
   voiceStatus,
   onDictate,
-  onSteer
+  onSteer,
+  onToggleEmojiPicker
 }: {
   busy: boolean
   busyAction: 'queue' | 'stop'
@@ -61,6 +63,7 @@ export function ComposerControls({
   voiceStatus: VoiceStatus
   onDictate: () => void
   onSteer: () => void
+  onToggleEmojiPicker: () => void
 }) {
   const { t } = useI18n()
   const c = t.composer
@@ -82,6 +85,20 @@ export function ComposerControls({
   return (
     <div className="ml-auto flex shrink-0 items-center gap-(--composer-control-gap)">
       <DictationButton disabled={disabled} onToggle={onDictate} state={state.voice} status={voiceStatus} />
+
+      <Tip label="Pick Emoji">
+        <Button
+          aria-label="Pick Emoji"
+          className={GHOST_ICON_BTN}
+          disabled={disabled}
+          onClick={onToggleEmojiPicker}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <Smile size={16} />
+        </Button>
+      </Tip>
       {canSteer && (
         <Tip label={steerTip}>
           <Button

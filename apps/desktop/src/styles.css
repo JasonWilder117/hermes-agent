@@ -296,12 +296,12 @@
 
     --dt-font-sans:
       'Segoe WPC', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif,
-      'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', emoji;
+      'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', emoji;
     /* Key caps always use the native UI face — never theme typography overrides. */
     --dt-font-kbd: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
     --dt-font-mono:
-      'Cascadia Code', 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, Consolas, monospace, 'Apple Color Emoji',
-      'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', emoji;
+      'Cascadia Code', 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, Consolas, monospace, 'Noto Color Emoji', 'Apple Color Emoji',
+      'Segoe UI Emoji', 'Segoe UI Symbol', emoji;
     --dt-base-size: 1rem;
     --dt-line-height: 1.5;
     --dt-letter-spacing: 0;

@@ -926,24 +926,67 @@ async def vision_analyze_tool(
         # Use the prompt as provided (model_tools.py now handles full description formatting)
         comprehensive_prompt = user_prompt
         
-        # Prepare the message with base64-encoded image
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": comprehensive_prompt
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": image_data_url
+        # === TYPOGRAPHIC VISION INTERCEPT ===
+        # Use our native ascii engine to translate the image into a 160-column text grid
+        # so text-only local models can "see" it natively.
+        try:
+            import subprocess
+            import sys
+            ascii_script = r"C:\Users\silverteam117\AppData\Local\hermes\hermes-agent\skills\creative\ascii-video\ascii_image.py"
+            
+            logger.info("Converting image to Typographic Vision grid (-c 160)...")
+            result = subprocess.run(
+                [sys.executable, ascii_script, str(temp_image_path), "-c", "160"],
+                capture_output=True, text=True, check=True
+            )
+            ascii_text = result.stdout
+            
+            # Wrap the ASCII grid in context so the LLM knows how to read it
+            comprehensive_prompt = (
+                f"{comprehensive_prompt}\n\n"
+                f"=== SYSTEM: TYPOGRAPHIC VISION PAYLOAD ===\n"
+                f"The user has uploaded an image. Since you are operating in native text mode, "
+                f"the image has been converted into a 160-column True Color ASCII typographic grid.\n"
+                f"You can trace shapes, shadows, and hair textures by reading the character density "
+                f"(e.g., @ and # are dark/dense, . and : are light) and the ANSI RGB escape codes.\n"
+                f"Scan the grid below and describe what you see:\n\n"
+                f"{ascii_text}\n"
+                f"==========================================\n"
+            )
+            
+            # We completely strip the base64 image_url, turning this into a pure text payload!
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": comprehensive_prompt
                         }
-                    }
-                ]
-            }
-        ]
+                    ]
+                }
+            ]
+            logger.info("Successfully replaced image with Typographic Vision text payload.")
+        except Exception as e:
+            logger.error("Typographic vision failed, falling back to standard base64 payload: %s", e)
+            # Standard fallback payload
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": comprehensive_prompt
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_data_url
+                            }
+                        }
+                    ]
+                }
+            ]
         
         logger.info("Processing image with vision model...")
         

@@ -213,6 +213,26 @@ For segmented videos (quotes, scenes, chapters), render each as a separate clip 
 | `references/optimization.md` | Hardware detection, quality profiles, vectorized patterns, parallel rendering, memory management, performance budgets |
 | `references/troubleshooting.md` | NumPy broadcasting traps, blend mode pitfalls, multiprocessing/pickling, brightness diagnostics, ffmpeg issues, font problems, common mistakes |
 
+## Standalone Image Tools
+
+The `ascii-video` skill includes two standalone utility scripts for converting static images to colored ANSI art and back to PNGs.
+
+### `ascii_image.py`
+Converts a standard image into a 24-bit True Color ANSI ASCII grid outputting directly to the terminal.
+```powershell
+# Auto-fits to terminal width
+python ascii_image.py input.jpg
+
+# Force a specific width (e.g. 300 columns) and save to a file
+python ascii_image.py input.jpg -c 300 > output.ansi
+```
+
+### `ascii_image_reversal.py`
+Reverses a colored `.ansi` file back into an actual `.png` image file. This is ideal for exporting high-res ASCII art to share outside the terminal.
+```powershell
+python ascii_image_reversal.py output.ansi final_image.png --size 12
+```
+
 ---
 
 ## Creative Divergence (use only when user requests experimental/creative/unique output)
